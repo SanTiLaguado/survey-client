@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import { login } from "../../services/AuthService"; // Asegúrate de que la ruta sea correcta
+import { login, register} from "../../services/AuthService";
+import cslogo from '../../assets/cslogo.png'
 import "./Auth.css";
 
 export default function Auth() {
@@ -15,8 +16,9 @@ export default function Auth() {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+    document.title = 'Campus Survey | Login';
     if (token) {
-      navigate('/dashboard');
+      navigate('/home');
     }
     }, [token, navigate]
   );
@@ -30,11 +32,11 @@ export default function Auth() {
       if (isLogin) {
         await login(email, password);
         console.log("Inicio de sesión exitoso");
-        navigate('/dashboard')
+        navigate('/home')
       } else {
         await register(name, email, password);
         console.log("Registro exitoso");
-        // Redirigir o actualizar estado después del registro exitoso
+        navigate('/home')
       }
     } catch (err) {
       setError(isLogin ? "Error al iniciar sesión. Por favor, intente de nuevo." : "Error al registrarse. Por favor, intente de nuevo.");
@@ -47,7 +49,7 @@ export default function Auth() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-image-container">
-          <img src="/assets/placeholder.svg" alt="Login visual" className="auth-image" />
+          <img src={cslogo} alt="Login Logo" className="auth-image" />
         </div>
         <div className="auth-form-container">
           <h2 className="auth-title">
