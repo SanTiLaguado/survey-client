@@ -55,7 +55,7 @@ const Navbar = () => {
       </div>
       <div className="credit">
         Campus Survey <br />
-        v0.2.0
+        v0.2.1
       </div>
     </nav>
   );
