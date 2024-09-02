@@ -3,13 +3,14 @@ import axios from 'axios';
 const API_LOGIN_URL = 'http://localhost:6969/auth/login';
 const API_REGISTER_URL = 'http://localhost:6969/auth/register';
 
-export const login = async (email, password) => {
+export const login = async (username, password) => {
   try {
-    const response = await axios.post(API_LOGIN_URL, { email, password });
-    const { token, role } = response.data;
+    const response = await axios.post(API_LOGIN_URL, { username, password });
+    const { token, role, fullname } = response.data;
 
     localStorage.setItem('token', token);
     localStorage.setItem('role', role);
+    localStorage.setItem('fullname', fullname);
 
     return { token, role };
   } catch (error) {
@@ -18,13 +19,14 @@ export const login = async (email, password) => {
   }
 };
 
-export const register = async (username, email, password) => {
+export const register = async (username, password, fullname) => {
   try {
-    const response = await axios.post(API_REGISTER_URL, { username, email, password });
+    const response = await axios.post(API_REGISTER_URL, { username, password, fullname });
     const { token, role } = response.data;
 
     localStorage.setItem('token', token);
     localStorage.setItem('role', role);
+    localStorage.setItem('fullname', fullname);
 
     return { token, role };
   } catch (error) {
@@ -36,6 +38,7 @@ export const register = async (username, email, password) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
+  localStorage.removeItem('fullname');
   window.location.href = '/login';
 };
 
