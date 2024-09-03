@@ -11,7 +11,6 @@ const Surveys = () => {
 
     return (
         <section className="main" id="surveys">
-            <h1>Surveys</h1>
             <SurveyGrid />
         </section>
     );

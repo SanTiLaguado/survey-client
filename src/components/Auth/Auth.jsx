@@ -34,9 +34,10 @@ export default function Auth() {
         console.log("Inicio de sesión exitoso");
         navigate('/home')
       } else {
-        await register(name, email, password);
+        await register(email, password, name);
         console.log("Registro exitoso");
-        navigate('/home')
+        navigate('/login')
+        setIsLogin(true)
       }
     } catch (err) {
       setError(isLogin ? "Error al iniciar sesión. Por favor, intente de nuevo." : "Error al registrarse. Por favor, intente de nuevo.");

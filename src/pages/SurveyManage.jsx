@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import SurveyList from '../components/SurveyList/SurveyList';
 
 const SurveyManage = () => {
 
@@ -7,8 +8,9 @@ const SurveyManage = () => {
     }, []);
 
     return (
-        <section className="main" id="responses">
-            <h1>Gestion de encuestas</h1>
+        <section className="main" id="survmanage">
+            <div className='main-card'></div>
+            <SurveyList />
         </section>
     );
 };

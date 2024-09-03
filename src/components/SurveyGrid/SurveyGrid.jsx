@@ -1,136 +1,142 @@
 import React, { useState, useEffect } from 'react';
 import { getRole } from '../../services/AuthService.js';
-import { viewAll, viewAllPublic } from '../../services/SurveyService.js';
+import { viewAll, viewAllPublic, viewChapters, viewQuestions } from '../../services/SurveyService.js';
 import { Card, Col, Row, Modal, Button, List } from 'antd';
 
 const SurveyGrid = () => {
   const [surveys, setSurveys] = useState([]);
   const [visible, setVisible] = useState(false);
   const [currentSurvey, setCurrentSurvey] = useState(null);
+  const [chapters, setChapters] = useState([]);
   const [selectedChapter, setSelectedChapter] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [questionsVisible, setQuestionsVisible] = useState(false);
 
   useEffect(() => {
     const fetchSurveys = async () => {
       const role = getRole();
       try {
+        let response;
         if (role === 'ADMIN') {
-          const response = await viewAll();
-          setSurveys(response.data); // Asume que `response.data` contiene las encuestas
+          response = await viewAll();
         } else {
-          const response = await viewAllPublic();
-          setSurveys(response.data); // Asume que `response.data` contiene las encuestas
+          response = await viewAllPublic();
+        }
+
+        if (Array.isArray(response.data)) {
+          setSurveys(response.data);
+        } else {
+          console.error('Expected an array but got:', response.data);
+          setSurveys([]);
         }
       } catch (error) {
         console.error('Error fetching surveys:', error);
-        // Manejo del error, puedes mostrar una notificación o mensaje al usuario
+        setSurveys([]);
       }
     };
-
+  
     fetchSurveys();
   }, []);
 
-  const handleCardClick = (survey) => {
+  const handleSurveyClick = async (survey) => {
     setCurrentSurvey(survey);
+    console.log(survey.id)
+    const fetchedChapters = await fetchChapters(survey.id);
+    setChapters(fetchedChapters);
+    console.log(fetchedChapters)
     setVisible(true);
   };
 
-  const handleCancel = () => {
-    setVisible(false);
-    setCurrentSurvey(null);
-    setSelectedChapter(null);
+  const handleChapterClick = async (chapter) => {
+    setSelectedChapter(chapter);
+    await fetchQuestions(chapter.id);
+    setQuestionsVisible(true);
   };
 
-  const handleMenuClick = (e, survey) => {
-    e.domEvent.stopPropagation(); // Evita que el clic en el menú propague al Card
-    switch (e.key) {
-      case 'edit':
-        // Manejar edición
-        console.log('Edit', survey);
-        break;
-      case 'delete':
-        // Manejar eliminación
-        console.log('Delete', survey);
-        break;
-      default:
-        break;
+  const fetchChapters = async (surveyId) => {
+    try {
+      const response = await viewChapters(surveyId);
+      return response.data && Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+      return [];
     }
   };
 
-  const handleChapterClick = (chapter) => {
-    setSelectedChapter(chapter);
-  };
-
-  const handleResponseClick = (survey) => {
-    // Manejar la lógica para responder la encuesta
-    console.log('Responder encuesta', survey);
-    // Redirigir al usuario a la página de respuesta de la encuesta, abrir un formulario, etc.
+  const fetchQuestions = async (chapterId) => {
+    try {
+      const response = await viewQuestions(chapterId);
+      setQuestions(response.data && Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
   };
 
   return (
-    <>
-      <Row gutter={16}>
-        {surveys.map(survey => (
-          <Col span={8} key={survey.id}>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Encuestas Disponibles</h1>
+      <Row gutter={[16, 16]}>
+        {surveys.map((survey) => (
+          <Col xs={24} sm={12} md={8} lg={6} key={survey.id}>
             <Card
-              title={survey.name} // Cambiado de title a name
               hoverable
-              actions={[
-                <Button key="respond" type="primary" onClick={() => handleResponseClick(survey)}>
-                  Responder Encuesta
-                </Button>
-              ]}
-              onClick={() => handleCardClick(survey)}
+              onClick={() => handleSurveyClick(survey)}
+              className="h-full"
             >
-              {survey.description}
+              <h2 className="text-lg font-semibold mb-2">{survey.title}</h2>
+              <p className="text-gray-600 mb-4">{survey.description}</p>
+              <Button type="primary">
+                Responder Encuesta
+              </Button>
             </Card>
           </Col>
         ))}
       </Row>
 
-      {currentSurvey && (
-        <Modal
-          title={currentSurvey.name} // Cambiado de title a name
-          visible={visible}
-          onCancel={handleCancel}
-          footer={null}
-          width={800}
-        >
-          <h3>Capítulos</h3>
-          <Row gutter={16}>
-            {currentSurvey.chapters.map(chapter => (
-              <Col span={12} key={chapter.id}>
-                <Card
-                  title={chapter.title}
-                  hoverable
-                  onClick={() => handleChapterClick(chapter)}
-                >
-                  {chapter.questions.length} Preguntas
-                </Card>
-              </Col>
-            ))}
-          </Row>
-
-          {selectedChapter && (
-            <Modal
-              title={selectedChapter.title}
-              visible={!!selectedChapter}
-              onCancel={() => setSelectedChapter(null)}
-              footer={null}
-            >
-              <h4>Preguntas</h4>
-              <List
-                dataSource={selectedChapter.questions}
-                renderItem={item => (
-                  <List.Item>
-                    {item.text}
-                  </List.Item>
-                )}
-              />
-            </Modal>
+      <Modal
+        title={currentSurvey?.title}
+        open={visible}
+        onCancel={() => setVisible(false)}
+        footer={null}
+        width={800}
+      >
+        <h3 className="text-lg font-semibold mb-4">Capítulos</h3>
+        <List
+          grid={{ gutter: 16, column: 3 }}
+          dataSource={chapters}
+          renderItem={(chapter) => (
+            <List.Item>
+              <Card
+                hoverable
+                onClick={() => handleChapterClick(chapter)}
+              >
+                <h4 className="font-medium">{chapter.title}</h4>
+              </Card>
+            </List.Item>
           )}
-        </Modal>
-      )}
-    </>
+        />
+      </Modal>
+
+      <Modal
+        title={`Preguntas - ${selectedChapter?.title}`}
+        open={questionsVisible}
+        onCancel={() => setQuestionsVisible(false)}
+        footer={null}
+        width={800}
+      >
+        <List
+          dataSource={questions}
+          renderItem={(question) => (
+            <List.Item>
+              <div>
+                <h4 className="font-medium">{question.text}</h4>
+                <Button type="link">Ver</Button>
+              </div>
+            </List.Item>
+          )}
+        />
+      </Modal>
+    </div>
   );
 };
 

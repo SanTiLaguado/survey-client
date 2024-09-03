@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const API_VIEW_ALL_URL = 'http://localhost:6969/surveys/all';
-const API_VIEW_ALL_PUBLIC_URL = 'http://localhost:6969/surveys/all/public';
+const API_VIEW_ALL_URL = 'http://localhost:6969/survey/all';
+const API_VIEW_ALL_PUBLIC_URL = 'http://localhost:6969/survey/all/public';
+
+const API_SURVEY_CHAPTERS_URL = (surveyId) => `http://localhost:6969/chapters/survey/${surveyId}`;
+const API_CHAPTER_QUESTIONS_URL = (chapterId) => `http://localhost:6969/questions/chapter/${chapterId}`;
 
 // Función para obtener el token desde el almacenamiento local
 const getToken = () => localStorage.getItem('token');
@@ -18,7 +21,6 @@ const fetchWithToken = async (url) => {
         return response;
     } catch (error) {
         console.error('Error fetching data:', error);
-        // Puedes retornar un objeto vacío o lanzar un error aquí
         return { data: [] };
     }
 }
@@ -29,4 +31,12 @@ export const viewAll = async () => {
 
 export const viewAllPublic = async () => {
     return await fetchWithToken(API_VIEW_ALL_PUBLIC_URL);
+}
+
+export const viewChapters = async (surveyId) => {
+    return await fetchWithToken(API_SURVEY_CHAPTERS_URL(surveyId));
+}
+
+export const viewQuestions = async (chapterId) => {
+    return await fetchWithToken(API_CHAPTER_QUESTIONS_URL(chapterId));
 }

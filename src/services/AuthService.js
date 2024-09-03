@@ -6,13 +6,13 @@ const API_REGISTER_URL = 'http://localhost:6969/auth/register';
 export const login = async (username, password) => {
   try {
     const response = await axios.post(API_LOGIN_URL, { username, password });
-    const { token, role, fullname } = response.data;
+    const { token, role, userfullname } = response.data;
 
     localStorage.setItem('token', token);
     localStorage.setItem('role', role);
-    localStorage.setItem('fullname', fullname);
+    localStorage.setItem('userfullname', userfullname);
 
-    return { token, role };
+    return { token, role, userfullname }; // Devolviendo un objeto
   } catch (error) {
     console.error('Error logging in', error);
     throw error;
@@ -21,14 +21,12 @@ export const login = async (username, password) => {
 
 export const register = async (username, password, fullname) => {
   try {
-    const response = await axios.post(API_REGISTER_URL, { username, password, fullname });
-    const { token, role } = response.data;
+    await axios.post(API_REGISTER_URL, { username, password, fullname });
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userfullname');
 
-    localStorage.setItem('token', token);
-    localStorage.setItem('role', role);
-    localStorage.setItem('fullname', fullname);
-
-    return { token, role };
   } catch (error) {
     console.error('Error registering', error);
     throw error;
@@ -38,9 +36,10 @@ export const register = async (username, password, fullname) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
-  localStorage.removeItem('fullname');
+  localStorage.removeItem('userfullname');
   window.location.href = '/login';
 };
 
 export const getToken = () => localStorage.getItem('token');
 export const getRole = () => localStorage.getItem('role');
+export const getName = () => localStorage.getItem('userfullname');
