@@ -11,6 +11,7 @@ export const login = async (username, password) => {
     localStorage.setItem('token', token);
     localStorage.setItem('role', role);
     localStorage.setItem('userfullname', userfullname);
+    localStorage.setItem('email', username);
 
     return { token, role, userfullname }; // Devolviendo un objeto
   } catch (error) {
@@ -43,3 +44,4 @@ export const logout = () => {
 export const getToken = () => localStorage.getItem('token');
 export const getRole = () => localStorage.getItem('role');
 export const getName = () => localStorage.getItem('userfullname');
+export const getEmail = () => localStorage.getItem('email');

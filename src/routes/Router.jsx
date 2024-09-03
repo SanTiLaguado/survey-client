@@ -13,6 +13,7 @@ const Responses = lazy(() => import('../pages/Responses.jsx'));
 const Profile = lazy(() => import('../pages/Profile.jsx'));
 const PostSurvey = lazy(() => import('../pages/PostSurvey.jsx'));
 const SurveyManage = lazy(() => import('../pages/SurveyManage.jsx'));
+const CreateSurvey = lazy(() => import('../pages/CreateSurvey.jsx'));
 
 // Componente Layout que incluye el Navbar y Outlet para renderizar las rutas
 const Layout = () => {
@@ -111,6 +112,16 @@ const Router = createBrowserRouter([
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <Suspense fallback={<div>Loading...</div>}>
               <SurveyManage />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'admin/create',
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <Suspense fallback={<div>Loading...</div>}>
+              <CreateSurvey />
             </Suspense>
           </ProtectedRoute>
         ),

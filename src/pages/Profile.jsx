@@ -1,12 +1,13 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getName, getRole } from '../services/AuthService.js';
+import { getEmail, getName, getRole } from '../services/AuthService.js';
 
 const Profile = () => {
     const navigate = useNavigate();
 
     const role = getRole();
     const name = getName();  
+    const email = getEmail();
 
     useEffect(() => {
         document.title = 'Mi Perfil - Campus Survey';
@@ -29,7 +30,7 @@ const Profile = () => {
                         />
                         <div className="profile-info">
                             <h2 className="profile-name">{name || "Usuario Ejemplo"}</h2>
-                            <p className="profile-email">usuario@ejemplo.com</p>
+                            <p className="profile-email">{email || "usuario@ejemplo.com"}</p>
                             <p className="profile-role">{role || "Rol no especificado"}</p>
                         </div>
                     </div>

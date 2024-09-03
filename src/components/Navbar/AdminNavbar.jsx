@@ -62,7 +62,7 @@ const Navbar = () => {
       <div className="credit">
         Campus Survey <br />
         Panel Administrador <br />        
-        v0.3.0
+        v0.3.1
       </div>
     </nav>
   );

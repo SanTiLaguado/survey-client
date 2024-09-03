@@ -1,0 +1,14 @@
+#survmanage{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.upper-card{
+    width: 75vw;
+    padding: 1em;
+    margin: 1.3em 0em 0.5em 0em;
+    background-color: white;
+    box-shadow: 0 0 2px #c7c7c7;
+    border-radius: 5px;
+}
