@@ -55,3 +55,8 @@
 .statusinfo p{
     font-size: 15px;
 }
+
+.ant-modal-wrap{
+    margin-left: 250px;
+
+}
