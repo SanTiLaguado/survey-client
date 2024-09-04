@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+
+import { Select, Space } from 'antd';
 import SurveyList from '../components/SurveyList/SurveyList';
 
 const SurveyManage = () => {
@@ -9,7 +11,7 @@ const SurveyManage = () => {
         document.title = 'Gestion de encuestas - Admin Campus Survey';
     }, []);
 
-    const handleButton= () => {
+    const handleButton = () => {
         navigate('/admin/create');
     };
 
@@ -20,6 +22,7 @@ const SurveyManage = () => {
                 <button className="primary-button" onClick={handleButton}>
                     Crear nueva encuesta
                 </button>
+
             </div>
             <div className='main-card'></div>
             <SurveyList />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, List, Card, Dropdown, Button, Menu, Popconfirm, Input, Form } from 'antd';
-import { viewAll, viewChapters, updateSurvey } from '../../services/SurveyService.js';
+import { viewAll, viewChapters, updateSurvey, postSurvey } from '../../services/SurveyService.js';
 import { MoreOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 
@@ -10,7 +10,9 @@ const SurveyList = () => {
     const [visible, setVisible] = useState(false);
     const [editVisible, setEditVisible] = useState(false); // Estado para el modal de edición
     const [currentSurvey, setCurrentSurvey] = useState(null);
+    const [currentChapter, setCurrentChapter] = useState(null); // Estado para el capítulo actual
     const [dropdownVisible, setDropdownVisible] = useState({});
+    const [chapterDropdownVisible, setChapterDropdownVisible] = useState({}); // Estado para los dropdowns de capítulos
     const [form] = Form.useForm(); // Formulario de Ant Design
 
     useEffect(() => {
@@ -94,11 +96,26 @@ const SurveyList = () => {
         }
     };
 
+    const handlePublishSurvey = async (surveyId) => {
+        const pstatus = true;
+        try {
+            await postSurvey(surveyId, pstatus);
+            message.success('Encuesta publicada exitosamente');
+        } catch (error) {
+            console.error('Error publicando encuesta:', error);
+            message.error('Error publicando encuesta.');
+        }
+    };
+
     const handleDropdownVisibleChange = (surveyId, flag) => {
         setDropdownVisible(prev => ({ ...prev, [surveyId]: flag }));
     };
 
-    const renderMenu = (surveyId) => {
+    const handleChapterDropdownVisibleChange = (chapterId, flag) => {
+        setChapterDropdownVisible(prev => ({ ...prev, [chapterId]: flag }));
+    };
+
+    const renderSurveyMenu = (surveyId) => {
         const menuItems = [
             {
                 key: 'edit',
@@ -132,6 +149,50 @@ const SurveyList = () => {
         return <Menu items={menuItems} onClick={(e) => handleMenuClick(e, surveyId)} />;
     };
 
+    const handleChapterMenuClick = async (e, chapterId) => {
+        e.domEvent.stopPropagation();
+        switch (e.key) {
+            case 'edit':
+                // Implementar lógica para editar capítulo
+                break;
+            case 'delete':
+                // Implementar lógica para eliminar capítulo
+                break;
+            default:
+                break;
+        }
+    };
+
+    const renderChapterMenu = (chapterId) => {
+        const menuItems = [
+            {
+                key: 'edit',
+                label: 'Editar capítulo',
+            },
+            {
+                key: 'delete',
+                label: (
+                    <Popconfirm
+                        title="¿Estás seguro? Esta acción es irreversible."
+                        onConfirm={(e) => {
+                            e.stopPropagation();
+                            // Implementar lógica para eliminar capítulo
+                            message.success('Capítulo correctamente eliminado');
+                        }}
+                        okText="Sí"
+                        cancelText="No"
+                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                        onCancel={() => setChapterDropdownVisible(prev => ({ ...prev, [chapterId]: false }))}
+                    >
+                        <span>Eliminar capítulo</span>
+                    </Popconfirm>
+                ),
+            },
+        ];
+
+        return <Menu items={menuItems} onClick={(e) => handleChapterMenuClick(e, chapterId)} />;
+    };
+
     return (
         <section className="survey-list">
             {surveys.map(survey => (
@@ -144,13 +205,15 @@ const SurveyList = () => {
                         <h2>{survey.name}</h2>
                         <p>{survey.description}</p>
                     </div>
+                    
                     <div className='s-options'>
                         <div className='statusinfo'>
                             <h3>Estado:</h3>
                             <p>{survey.status ? "PÚBLICO" : "PRIVADO"}</p>
                         </div>
+
                         <Dropdown
-                            overlay={renderMenu(survey.id)}
+                            overlay={renderSurveyMenu(survey.id)}
                             trigger={['click']}
                             visible={dropdownVisible[survey.id] || false}
                             onVisibleChange={(flag) => handleDropdownVisibleChange(survey.id, flag)}
@@ -160,6 +223,16 @@ const SurveyList = () => {
                                 onClick={(e) => e.stopPropagation()}
                             />
                         </Dropdown>
+                    </div>
+                    <div className="post_but">
+                        {!survey.status && (
+                            <Button type="primary" onClick={(e) => {
+                                e.stopPropagation();
+                                handlePublishSurvey(survey.id);
+                            }}>
+                                Publicar
+                            </Button>
+                        )}
                     </div>
                 </div>
             ))}
@@ -182,6 +255,17 @@ const SurveyList = () => {
                                 onClick={() => console.log(`Capítulo seleccionado: ${chapter.title}`)}
                             >
                                 <h4 className="font-medium">{chapter.title}</h4>
+                                <Dropdown
+                                    overlay={renderChapterMenu(chapter.id)}
+                                    trigger={['click']}
+                                    visible={chapterDropdownVisible[chapter.id] || false}
+                                    onVisibleChange={(flag) => handleChapterDropdownVisibleChange(chapter.id, flag)}
+                                >
+                                    <Button
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </Dropdown>
                             </Card>
                         </List.Item>
                     )}

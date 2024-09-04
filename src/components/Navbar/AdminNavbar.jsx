@@ -36,12 +36,6 @@ const Navbar = () => {
           </div>
           <Link className="option-link" to="/admin/manage">Gestion de Encuestas</Link>
         </div>
-        <div className="option">
-          <div className="option-icon">
-            <i className="fa fa-globe" aria-hidden="true"></i>
-          </div>
-          <Link className="option-link" to="/admin/post">Publicar Encuestas</Link>
-        </div>
       </div>
       <div className='sectitle'>MIS OPCIONES</div>
       <div className='ops'>
@@ -62,7 +56,7 @@ const Navbar = () => {
       <div className="credit">
         Campus Survey <br />
         Panel Administrador <br />        
-        v0.3.3
+        v0.3.4
       </div>
     </nav>
   );

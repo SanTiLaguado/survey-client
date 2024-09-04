@@ -97,16 +97,6 @@ const Router = createBrowserRouter([
         ),
       },
       {
-        path: 'admin/post',
-        element: (
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <Suspense fallback={<div>Loading...</div>}>
-              <PostSurvey />
-            </Suspense>
-          </ProtectedRoute>
-        ),
-      },
-      {
         path: 'admin/manage',
         element: (
           <ProtectedRoute allowedRoles={['ADMIN']}>
