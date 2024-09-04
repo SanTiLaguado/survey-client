@@ -4,6 +4,11 @@
     align-items: center;
 }
 
+#survmanage h1{
+    margin-top: 0.7em;
+
+}
+
 .upper-card{
     width: 75vw;
     padding: 1em;

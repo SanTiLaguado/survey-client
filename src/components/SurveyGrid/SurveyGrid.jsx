@@ -83,7 +83,7 @@ const SurveyGrid = () => {
               onClick={() => handleSurveyClick(survey)}
               className="h-full"
             >
-              <h2 className="text-lg font-semibold mb-2">{survey.title}</h2>
+              <h2 className="text-lg font-semibold mb-2">{survey.name}</h2>
               <p className="text-gray-600 mb-4">{survey.description}</p>
               <Button type="primary">
                 Responder Encuesta
@@ -94,7 +94,7 @@ const SurveyGrid = () => {
       </Row>
 
       <Modal
-        title={currentSurvey?.title}
+        title={currentSurvey?.name}
         open={visible}
         onCancel={() => setVisible(false)}
         footer={null}
