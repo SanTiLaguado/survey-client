@@ -12,16 +12,14 @@ const API_CHAPTER_QUESTIONS_URL = (chapterId) => `http://localhost:6969/question
 const API_DELETE_CHAPTER_URL = (chapterId) => `http://localhost:6969/chapters/delete/${chapterId}`;
 const API_UPDATE_CHAPTER_URL = (chapterId) => `http://localhost:6969/chapters/update/${chapterId}`;
 
-// Función para obtener el token desde el almacenamiento local
 const getToken = () => localStorage.getItem('token');
 
-// Función para hacer la solicitud GET con el token JWT
 const fetchWithToken = async (url) => {
     try {
         const token = getToken();
         const response = await axios.get(url, {
             headers: {
-                'Authorization': `Bearer ${token}` // Incluye el token JWT en el encabezado
+                'Authorization': `Bearer ${token}`
             }
         });
         return response;

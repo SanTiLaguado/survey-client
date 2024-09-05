@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, List, Card, Dropdown, Button, Menu, Popconfirm, Input, InputNumber, Form } from 'antd';
 import { viewAll, viewChapters, updateSurvey, postSurvey, updateChapter, viewQuestions } from '../../services/SurveyService.js';
+import CreateQuestionModal from '../CreateQuestion/CreateQuestion.jsx';
+
+import { createChapter } from '../../services/ChapterService.js';
 import { MoreOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 
@@ -59,7 +62,7 @@ const SurveyList = () => {
             console.error('Error fetching questions:', error);
         }
     };
-    
+
 
     const handleSurveyClick = async (survey) => {
         setCurrentSurvey(survey);
@@ -186,9 +189,9 @@ const SurveyList = () => {
             case 'edit':
                 if (chapter) {
                     setCurrentChapter(chapter);
-                    form.setFieldsValue({ 
+                    form.setFieldsValue({
                         number: chapter.number,
-                        title: chapter.title    
+                        title: chapter.title
                     });
                     setEditChapterVisible(true);
                 }
@@ -229,16 +232,23 @@ const SurveyList = () => {
 
     const handleCreateChapterSubmit = async (values) => {
         try {
-            // Implementa el servicio para crear capítulos aquí
-            message.success('Capítulo creado exitosamente');
-            setCreateChapterVisible(false);
-            form.resetFields();
-            // Actualiza la lista de capítulos si es necesario
+            if (currentSurvey) {
+                const createdChapter = await createChapter(currentSurvey.id, values);
+
+                setChapters(prevChapters => [...prevChapters, createdChapter]);
+
+                message.success('Capítulo creado exitosamente');
+                setCreateChapterVisible(false);
+                form.resetFields();
+            } else {
+                message.error('No se puede crear el capítulo. No hay una encuesta seleccionada.');
+            }
         } catch (error) {
             console.error('Error creando capítulo:', error);
+            message.error('Error creando capítulo.');
         }
     };
-    
+
     const handleCreateQuestionSubmit = async (values) => {
         try {
             // Implementa el servicio para crear preguntas aquí
@@ -248,8 +258,10 @@ const SurveyList = () => {
             // Actualiza la lista de preguntas si es necesario
         } catch (error) {
             console.error('Error creando pregunta:', error);
+            message.error('Error creando pregunta.');
         }
     };
+    
 
     return (
         <section className="survey-list">
@@ -259,7 +271,7 @@ const SurveyList = () => {
                         <h2>{survey.name}</h2>
                         <p>{survey.description}</p>
                     </div>
-                    
+
                     <div className='s-options'>
                         <div className='statusinfo'>
                             <h3>Estado:</h3>
@@ -319,7 +331,7 @@ const SurveyList = () => {
                     )}
                 />
                 <div style={{ marginTop: '5px' }}>
-                <Button type="primary" onClick={() => setCreateChapterVisible(true)}>
+                    <Button type="primary" onClick={() => setCreateChapterVisible(true)}>
                         Crear Capítulo
                     </Button>
                 </div>
@@ -350,10 +362,10 @@ const SurveyList = () => {
                                     <Button type="link">Ver</Button>
                                 </div>
                             </List.Item>
-                            
+
                         )}
                     />
-                    
+
                 ) : (
                     <p>No hay preguntas disponibles.</p>
                 )}
@@ -440,71 +452,77 @@ const SurveyList = () => {
             </Modal>
 
             <Modal
-            title="Crear Capítulo"
-            open={createChapterVisible}
-            onCancel={() => {
-                setCreateChapterVisible(false);
-                form.resetFields();
-            }}
-            footer={null}
-            width={600}
-        >
-            <Form form={form} layout="vertical" onFinish={handleCreateChapterSubmit}>
-                <Form.Item
-                    name="number"
-                    label="Número"
-                    rules={[
-                        { required: true, message: 'Por favor ingresa el número del capítulo.' },
-                        { type: 'number', min: 1, message: 'El número debe ser mayor que 0.' }
-                    ]}
-                >
-                    <InputNumber style={{ width: '100%' }} />
-                </Form.Item>
-                <Form.Item
-                    name="title"
-                    label="Nombre"
-                    rules={[{ required: true, message: 'Por favor ingresa el nombre del capítulo.' }]}
-                >
-                    <Input />
-                </Form.Item>
-                <Form.Item>
-                    <Button type="primary" htmlType="submit">Guardar</Button>
-                    <Button style={{ marginLeft: 8 }} onClick={() => {
-                        setCreateChapterVisible(false);
-                        form.resetFields();
-                    }}>Cancelar</Button>
-                </Form.Item>
-            </Form>
-        </Modal>
+                title="Crear Capítulo"
+                open={createChapterVisible}
+                onCancel={() => {
+                    setCreateChapterVisible(false);
+                    form.resetFields();
+                }}
+                footer={null}
+                width={600}
+            >
+                <Form form={form} layout="vertical" onFinish={handleCreateChapterSubmit}>
+                    <Form.Item
+                        name="number"
+                        label="Número"
+                        rules={[
+                            { required: true, message: 'Por favor ingresa el número del capítulo.' },
+                            { type: 'number', min: 1, message: 'El número debe ser mayor que 0.' }
+                        ]}
+                    >
+                        <InputNumber style={{ width: '100%' }} />
+                    </Form.Item>
+                    <Form.Item
+                        name="title"
+                        label="Nombre"
+                        rules={[{ required: true, message: 'Por favor ingresa el nombre del capítulo.' }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit">Guardar</Button>
+                        <Button style={{ marginLeft: 8 }} onClick={() => {
+                            setCreateChapterVisible(false);
+                            form.resetFields();
+                        }}>Cancelar</Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
 
-        <Modal
-            title="Crear Pregunta"
-            open={createQuestionVisible}
-            onCancel={() => {
-                setCreateQuestionVisible(false);
-                form.resetFields();
-            }}
-            footer={null}
-            width={600}
-        >
-            <Form form={form} layout="vertical" onFinish={handleCreateQuestionSubmit}>
-                {}
-                <Form.Item
-                    name="questionText"
-                    label="Texto de la Pregunta"
-                    rules={[{ required: true, message: 'Por favor ingresa el texto de la pregunta.' }]}
-                >
-                    <Input.TextArea rows={4} />
-                </Form.Item>
-                <Form.Item>
-                    <Button type="primary" htmlType="submit">Guardar</Button>
-                    <Button style={{ marginLeft: 8 }} onClick={() => {
-                        setCreateQuestionVisible(false);
-                        form.resetFields();
-                    }}>Cancelar</Button>
-                </Form.Item>
-            </Form>
-        </Modal>
+            <Modal
+                title="Crear Pregunta"
+                open={createQuestionVisible}
+                onCancel={() => {
+                    setCreateQuestionVisible(false);
+                    form.resetFields();
+                }}
+                footer={null}
+                width={600}
+            >
+                <Form form={form} layout="vertical" onFinish={handleCreateQuestionSubmit}>
+                    { }
+                    <Form.Item
+                        name="questionText"
+                        label="Texto de la Pregunta"
+                        rules={[{ required: true, message: 'Por favor ingresa el texto de la pregunta.' }]}
+                    >
+                        <Input.TextArea rows={4} />
+                    </Form.Item>
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit">Guardar</Button>
+                        <Button style={{ marginLeft: 8 }} onClick={() => {
+                            setCreateQuestionVisible(false);
+                            form.resetFields();
+                        }}>Cancelar</Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            <CreateQuestionModal
+                createQuestionVisible={createQuestionVisible}
+                setCreateQuestionVisible={setCreateQuestionVisible}
+                handleCreateQuestionSubmit={handleCreateQuestionSubmit}
+            />
 
         </section>
     );
