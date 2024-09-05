@@ -94,7 +94,7 @@ const SurveyGrid = () => {
       </Row>
 
       <Modal
-        title={currentSurvey?.name}
+        title={currentSurvey?.title}
         open={visible}
         onCancel={() => setVisible(false)}
         footer={null}
@@ -107,10 +107,8 @@ const SurveyGrid = () => {
           renderItem={(chapter) => (
             <List.Item>
               <Card
-                hoverable
-                onClick={() => handleChapterClick(chapter)}
-              >
-                <h4 className="font-medium">{chapter.title}</h4>
+                hoverable onClick={() => handleChapterClick(chapter)}>
+                <h4 className="font-medium">{chapter.number + ". " + chapter.title}</h4>
               </Card>
             </List.Item>
           )}
@@ -124,17 +122,28 @@ const SurveyGrid = () => {
         footer={null}
         width={800}
       >
-        <List
-          dataSource={questions}
-          renderItem={(question) => (
-            <List.Item>
-              <div>
-                <h4 className="font-medium">{question.text}</h4>
-                <Button type="link">Ver</Button>
-              </div>
-            </List.Item>
-          )}
-        />
+        {questions.length > 0 ? (
+          <List
+            dataSource={questions}
+            renderItem={(question) => (
+              <List.Item>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <div>
+                    <h4 className="font-medium">
+                      {`${question.questionNumber}. ${question.questionText}`}
+                    </h4>
+                    <span style={{ display: 'block', color: 'gray', marginTop: '4px' }}>
+                      {question.commentQuestion}
+                    </span>
+                  </div>
+                  <Button type="link">Ver</Button>
+                </div>
+              </List.Item>
+            )}
+          />
+        ) : (
+          <p>No hay preguntas disponibles.</p>
+        )}
       </Modal>
     </div>
   );
