@@ -2,11 +2,13 @@ import axios from "axios";
 
 const API_VIEW_ALL_URL = 'http://localhost:6969/survey/all';
 const API_VIEW_ALL_PUBLIC_URL = 'http://localhost:6969/survey/all/public';
+const API_CREATE_SURVEY_URL = 'http://localhost:6969/survey/create';
 
 const API_UPDATE_SURVEY_URL = (surveyId) => `http://localhost:6969/survey/update/${surveyId}`;
 const API_POST_SURVEY_URL = (surveyId) => `http://localhost:6969/survey/post/${surveyId}`;
 
 const API_SURVEY_CHAPTERS_URL = (surveyId) => `http://localhost:6969/chapters/survey/${surveyId}`;
+const API_DELETE_SURVEY_URL = (surveyId) => `http://localhost:6969/surveys/survey/${surveyId}`;
 const API_CHAPTER_QUESTIONS_URL = (chapterId) => `http://localhost:6969/questions/chapter/${chapterId}`;
 
 const API_DELETE_CHAPTER_URL = (chapterId) => `http://localhost:6969/chapters/delete/${chapterId}`;
@@ -26,6 +28,25 @@ const fetchWithToken = async (url) => {
     } catch (error) {
         console.error('Error fetching data:', error);
         return { data: [] };
+    }
+}
+
+export const createSurvey = async (newSurvey) => {
+    const token = getToken();
+
+    console.log(newSurvey)
+    
+    try {
+        const response = await axios.post(API_CREATE_SURVEY_URL, newSurvey, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+
+        console.log('Chapter created successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating chapter:', error.response ? error.response.data : error.message);
+        throw error;
     }
 }
 
@@ -78,8 +99,35 @@ export const postSurvey = async (surveyId, status) => {
 }
 
 export const deleteChapter = async (chapterId) => {
-    return await fetchWithToken(API_DELETE_CHAPTER_URL(chapterId));
-}
+    try {
+        const token = getToken();
+        const response = await axios.delete(API_DELETE_CHAPTER_URL(chapterId), {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting chapter:', error);
+        throw error;
+    }
+};
+
+export const deleteSurvey = async (surveyId) => {
+    try {
+        const token = getToken();
+        const response = await axios.delete(API_DELETE_SURVEY_URL(surveyId), {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting survey:', error);
+        throw error;
+    }
+};
+
 
 export const updateChapter = async (chapterId, updatedChapter) => {
     console.log(updatedChapter)

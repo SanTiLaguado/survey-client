@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, List, Card, Dropdown, Button, Menu, Popconfirm, Input, InputNumber, Form } from 'antd';
-import { viewAll, viewChapters, updateSurvey, postSurvey, updateChapter, viewQuestions } from '../../services/SurveyService.js';
+import { viewAll, viewChapters, updateSurvey, postSurvey, updateChapter, viewQuestions, deleteSurvey, deleteChapter } from '../../services/SurveyService.js';
 import CreateQuestionModal from '../CreateQuestion/CreateQuestion.jsx';
 
 import { createChapter } from '../../services/ChapterService.js';
 import { MoreOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { message } from 'antd';
+import { viewQuestOptions, updateQuestion, deleteQuestion } from '../../services/QuestionService.js';
 
 const SurveyList = () => {
     const [surveys, setSurveys] = useState([]);
     const [chapters, setChapters] = useState([]);
     const [questions, setQuestions] = useState([]);
+    const [options, setOptions] = useState([]);
     const [visible, setVisible] = useState(false);
     const [questionsVisible, setQuestionsVisible] = useState(false);
     const [editSurveyVisible, setEditSurveyVisible] = useState(false); // Separate state for editing survey
+    const [editQuestionVisible, setEditQuestionVisible] = useState(false); // Separate state for editing survey
     const [editChapterVisible, setEditChapterVisible] = useState(false); // State for editing chapter
     const [currentSurvey, setCurrentSurvey] = useState(null);
     const [currentChapter, setCurrentChapter] = useState(null); // For editing chapter
@@ -22,6 +25,11 @@ const SurveyList = () => {
     const [createChapterVisible, setCreateChapterVisible] = useState(false);
     const [createQuestionVisible, setCreateQuestionVisible] = useState(false);
     const [chapterDropdownVisible, setChapterDropdownVisible] = useState({}); // Dropdown for chapters
+    const [optionsVisible, setOptionsVisible] = useState(false);
+    const [selectedQuestion, setSelectedQuestion] = useState(null);
+    const [QuestionDropdownVisible, setQuestionDropdownVisible] = useState({});
+
+
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -63,6 +71,16 @@ const SurveyList = () => {
         }
     };
 
+    const fetchOptions = async (questionId) => {
+        try {
+            console.log(questionId)
+            const response = await viewQuestOptions(questionId);
+            return response.data && Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Error fetching options:', error);
+            return [];
+        }
+    }
 
     const handleSurveyClick = async (survey) => {
         setCurrentSurvey(survey);
@@ -73,15 +91,33 @@ const SurveyList = () => {
 
     const handleChapterClick = async (chapter) => {
         setSelectedChapter(chapter);
-        await fetchQuestions(chapter.id); // Espera a que se carguen las preguntas
-        setQuestionsVisible(true); // Luego abre el modal
-        console.log(questions, chapter.id); // Verifica si las preguntas están siendo recibidas
+        setCurrentChapter(chapter);
+        await fetchQuestions(chapter.id);
+        setQuestionsVisible(true);
     };
+
 
     const handleDeleteSurvey = async (surveyId) => {
         console.log(`Eliminar encuesta ${surveyId}`);
-        // Call your deletion service here
-        setDropdownVisible(prev => ({ ...prev, [surveyId]: false }));
+        try {
+            await deleteSurvey(surveyId)
+            setDropdownVisible(prev => ({ ...prev, [surveyId]: false }));
+            message.success('Encuesta correctamente eliminada');
+        } catch (error) {
+            console.error('Error al eliminar la encuesta:', error);
+        }
+        
+    };
+
+    const handleDeleteChapter = async (chapterId) => {
+        console.log(`Eliminar chapter ${chapterId}`);
+        try {
+            await deleteChapter(chapterId)
+            setDropdownVisible(prev => ({ ...prev, [chapterId]: false }));
+            message.success('Capítulo correctamente eliminado');
+        } catch (error) {
+            console.error('Error al eliminar el capítulo:', error);
+        }
     };
 
     const handleMenuClick = async (e, surveyId) => {
@@ -121,6 +157,32 @@ const SurveyList = () => {
         }
     };
 
+    const handleEditQuestionSubmit = async (values) => {
+        try {
+            if (selectedQuestion) {
+
+                await updateQuestion(selectedQuestion.id, values);
+                console.log(values)
+
+                const updatedQuestions = questions.map(question =>
+                    question.id === selectedQuestion.id ? { ...question, ...values } : question
+                );
+                setQuestions(updatedQuestions);
+                console.log(updatedQuestions)
+
+                // Close the modal and reset form
+                setEditQuestionVisible(false);
+                form.resetFields();
+                message.success('Pregunta editada exitosamente');
+            } else {
+                message.error('No se puede editar la pregunta. No hay una pregunta seleccionada.');
+            }
+        } catch (error) {
+            console.error('Error updating question:', error);
+            message.error('Error editando pregunta.');
+        }
+    };
+
     const handleEditChapterSubmit = async (values) => {
         try {
             await updateChapter(currentChapter.id, values);
@@ -147,6 +209,13 @@ const SurveyList = () => {
         }
     };
 
+    const handleViewOptions = async (questionId) => {
+        const optionsData = await fetchOptions(questionId);
+        setOptions(optionsData); // Guarda las opciones en el estado
+        setSelectedQuestion(questions.find(q => q.id === questionId)); // Encuentra y guarda la pregunta seleccionada
+        setOptionsVisible(true);
+    };
+
     const handleDropdownVisibleChange = (surveyId, flag) => {
         setDropdownVisible(prev => ({ ...prev, [surveyId]: flag }));
     };
@@ -166,7 +235,6 @@ const SurveyList = () => {
                         onConfirm={(e) => {
                             e.stopPropagation();
                             handleDeleteSurvey(surveyId);
-                            message.success('Encuesta correctamente eliminada');
                         }}
                         okText="Sí"
                         cancelText="No"
@@ -212,10 +280,13 @@ const SurveyList = () => {
                 label: (
                     <Popconfirm
                         title="¿Estás seguro? Esta acción es irreversible."
-                        onConfirm={(e) => {
+                        onConfirm={async (e) => {
                             e.stopPropagation();
-                            // Implement chapter deletion logic
-                            message.success('Capítulo correctamente eliminado');
+                            try {
+                                await handleDeleteChapter(chapterId);
+                            } catch (error) {
+                                message.error('Error al eliminar el capítulo');
+                            }
                         }}
                         okText="Sí"
                         cancelText="No"
@@ -226,9 +297,10 @@ const SurveyList = () => {
                 ),
             },
         ];
-
+    
         return <Menu items={menuItems} onClick={(e) => handleChapterMenuClick(e, chapterId)} />;
     };
+    
 
     const handleCreateChapterSubmit = async (values) => {
         try {
@@ -249,19 +321,84 @@ const SurveyList = () => {
         }
     };
 
-    const handleCreateQuestionSubmit = async (values) => {
-        try {
-            // Implementa el servicio para crear preguntas aquí
-            message.success('Pregunta creada exitosamente');
-            setCreateQuestionVisible(false);
-            form.resetFields();
-            // Actualiza la lista de preguntas si es necesario
-        } catch (error) {
-            console.error('Error creando pregunta:', error);
-            message.error('Error creando pregunta.');
+    const handleEditQuestion = (questionId) => {
+        // Encuentra la pregunta seleccionada
+        const question = questions.find(q => q.id === questionId);
+        if (question) {
+            setSelectedQuestion(question);
+            // Rellena el formulario con los valores actuales
+            form.setFieldsValue({
+                questionNumber: question.questionNumber,
+                questionText: question.questionText,
+                commentQuestion: question.commentQuestion
+            });
+            setEditQuestionVisible(true);
         }
     };
+
+    const handleDeleteQuestion = async (questionId) => {
+        try {
+            console.log('Eliminar pregunta con ID:', questionId);
+            const result = await deleteQuestion(questionId);
+            console.log('Pregunta eliminada con éxito:', result);
+            message.success('Pregunta correctamente eliminada');
+        } catch (error) {
+            console.error('Error al eliminar la pregunta:', error);
+        }
+    };
+
+    const renderQuestionMenu = (questionId) => {
+        const menuItems = [
+            { key: 'edit', label: 'Editar pregunta' },
+            {
+                key: 'delete',
+                label: (
+                    <Popconfirm
+                        title="¿Estás seguro? Esta acción es irreversible."
+                        onConfirm={async () => {
+                            try {
+                                await handleDeleteQuestion(questionId);
+                                message.success('Pregunta correctamente eliminada');
+                            } catch (error) {
+                                message.error('Error al eliminar la pregunta');
+                            }
+                        }}
+                        okText="Sí"
+                        cancelText="No"
+                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                    >
+                        <span>Eliminar pregunta</span>
+                    </Popconfirm>
+                ),
+            },
+        ];
     
+        return <Menu items={menuItems} onClick={(e) => handleQuestionMenuClick(e, questionId)} />;
+    };
+    
+
+    const handleQuestionMenuClick = async (e, questionId) => {
+        e.domEvent.stopPropagation();
+        const question = questions.find(q => q.id === questionId);
+        switch (e.key) {
+            case 'edit':
+                if (question) {
+                    setSelectedQuestion(question);
+                    handleEditQuestion(question.id)
+                }
+                break;
+            case 'delete':
+                await handleDeleteQuestion(questionId);
+                break;
+            default:
+                break;
+        }
+    };
+
+    const handleQuestionDropdownVisibleChange = (questionId, flag) => {
+        setQuestionDropdownVisible(prev => ({ ...prev, [questionId]: flag }));
+    };
+
 
     return (
         <section className="survey-list">
@@ -337,7 +474,6 @@ const SurveyList = () => {
                 </div>
             </Modal>
 
-
             <Modal
                 title={`Preguntas - ${selectedChapter?.title}`}
                 open={questionsVisible}
@@ -350,7 +486,7 @@ const SurveyList = () => {
                         dataSource={questions}
                         renderItem={(question) => (
                             <List.Item>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <div style={{ display: 'flex', padding: '2px 9px 2px 10px', boxShadow: '0 0 0.8px', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                     <div>
                                         <h4 className="font-medium">
                                             {`${question.questionNumber}. ${question.questionText}`}
@@ -359,24 +495,75 @@ const SurveyList = () => {
                                             {question.commentQuestion}
                                         </span>
                                     </div>
-                                    <Button type="link">Ver</Button>
+                                    {question.responsetype === 'multipleChoice' && (
+                                        <Button
+                                            onClick={() => handleViewOptions(question.id)}
+                                        >
+                                            Ver Opciones
+                                        </Button>
+                                    )}
+                                    <Dropdown
+                                        overlay={renderQuestionMenu(question.id)}
+                                        trigger={['click']}
+                                        visible={QuestionDropdownVisible[question.id] || false}
+                                        onVisibleChange={(flag) => handleQuestionDropdownVisibleChange(question.id, flag)}
+                                    >
+                                        <Button icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
+                                    </Dropdown>
                                 </div>
                             </List.Item>
-
                         )}
                     />
-
                 ) : (
                     <p>No hay preguntas disponibles.</p>
                 )}
-                <div style={{ marginTop: '5px' }}>
+                <div style={{ marginTop: '8px' }}>
                     <Button type="primary" style={{ marginLeft: '8px' }} onClick={() => setCreateQuestionVisible(true)}>
                         Crear Pregunta
                     </Button>
                 </div>
             </Modal>
 
-
+            <Modal
+                title="Editar Pregunta"
+                open={editQuestionVisible}
+                onCancel={() => {
+                    setEditQuestionVisible(false);
+                    form.resetFields();
+                }}
+                footer={null}
+                width={600}
+            >
+                <Form form={form} layout="vertical" onFinish={handleEditQuestionSubmit}>
+                    <Form.Item
+                        name="questionNumber"
+                        label="Número de la Pregunta"
+                        rules={[{ required: true, message: 'Por favor ingresa el número de la pregunta.' }]}
+                    >
+                        <Input type="number" />
+                    </Form.Item>
+                    <Form.Item
+                        name="questionText"
+                        label="Texto de la Pregunta"
+                        rules={[{ required: true, message: 'Por favor ingresa el texto de la pregunta.' }]}
+                    >
+                        <Input.TextArea rows={4} />
+                    </Form.Item>
+                    <Form.Item
+                        name="commentQuestion"
+                        label="Comentario"
+                    >
+                        <Input.TextArea rows={2} />
+                    </Form.Item>
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit">Guardar</Button>
+                        <Button style={{ marginLeft: 8 }} onClick={() => {
+                            setEditQuestionVisible(false);
+                            form.resetFields();
+                        }}>Cancelar</Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
 
             <Modal
                 title="Editar Encuesta"
@@ -490,38 +677,39 @@ const SurveyList = () => {
             </Modal>
 
             <Modal
-                title="Crear Pregunta"
-                open={createQuestionVisible}
+                title={`Opciones de la Pregunta - ${selectedQuestion?.questionNumber}`}
+                open={optionsVisible}
                 onCancel={() => {
-                    setCreateQuestionVisible(false);
-                    form.resetFields();
+                    setOptionsVisible(false);
+                    setSelectedQuestion(null);
                 }}
                 footer={null}
-                width={600}
+                width={800}
             >
-                <Form form={form} layout="vertical" onFinish={handleCreateQuestionSubmit}>
-                    { }
-                    <Form.Item
-                        name="questionText"
-                        label="Texto de la Pregunta"
-                        rules={[{ required: true, message: 'Por favor ingresa el texto de la pregunta.' }]}
-                    >
-                        <Input.TextArea rows={4} />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit">Guardar</Button>
-                        <Button style={{ marginLeft: 8 }} onClick={() => {
-                            setCreateQuestionVisible(false);
-                            form.resetFields();
-                        }}>Cancelar</Button>
-                    </Form.Item>
-                </Form>
+                {selectedQuestion && (
+                    <>
+                        <h4 className="font-medium">{`${selectedQuestion.questionNumber}. ${selectedQuestion.questionText}`}</h4>
+                        <p style={{ color: 'gray' }}>{selectedQuestion.commentQuestion}</p>
+                        <List
+                            dataSource={options} // Usa el estado de opciones
+                            renderItem={(option) => (
+                                <List.Item>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                        <div>
+                                            <strong>{option.key}:</strong> {option.optionText}
+                                        </div>
+                                    </div>
+                                </List.Item>
+                            )}
+                        />
+                    </>
+                )}
             </Modal>
 
             <CreateQuestionModal
                 createQuestionVisible={createQuestionVisible}
                 setCreateQuestionVisible={setCreateQuestionVisible}
-                handleCreateQuestionSubmit={handleCreateQuestionSubmit}
+                chapterId={currentChapter?.id || null}
             />
 
         </section>
